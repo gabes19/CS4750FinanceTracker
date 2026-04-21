@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts | CS4750 Finance Tracker{% endblock %}
+
+{% block content %}
+<section>
+  <h2>Accounts</h2>
+  <p>Placeholder page for linked bank accounts and balance management.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/accounts.js') }}"></script>
+{% endblock %}

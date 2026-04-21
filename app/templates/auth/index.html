@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Auth | CS4750 Finance Tracker{% endblock %}
+
+{% block content %}
+<section>
+  <h2>Authentication</h2>
+  <p>Placeholder page for login, registration, and account security flows.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

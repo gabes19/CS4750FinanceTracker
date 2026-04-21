@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | CS4750 Finance Tracker{% endblock %}
+
+{% block content %}
+<section>
+  <h2>Dashboard</h2>
+  <p>Monthly overview of your income, expenses, and budget usage.</p>
+</section>
+
+<section>
+  <h3>Month</h3>
+  <form id="dashboard-filters" autocomplete="off">
+    <label for="dashboard-month">Month</label>
+    <input id="dashboard-month" name="month" type="month" value="{{ selected_month }}" required />
+    <button type="submit">Refresh</button>
+  </form>
+</section>
+
+<section class="card-grid">
+  <article class="summary-card">
+    <h3>Income</h3>
+    <p id="card-income" class="card-value">$0.00</p>
+  </article>
+  <article class="summary-card">
+    <h3>Expenses</h3>
+    <p id="card-expenses" class="card-value">$0.00</p>
+  </article>
+  <article class="summary-card">
+    <h3>Net</h3>
+    <p id="card-net" class="card-value">$0.00</p>
+  </article>
+</section>
+
+<section class="chart-grid">
+  <article>
+    <h3>Spending by Category</h3>
+    <canvas id="spending-chart" height="220"></canvas>
+  </article>
+  <article>
+    <h3>Budget Remaining by Category</h3>
+    <canvas id="budget-chart" height="220"></canvas>
+  </article>
+</section>
+
+<section>
+  <h3>Budget Breakdown</h3>
+  <p id="dashboard-message" role="status"></p>
+  <table id="budget-breakdown-table" border="1" cellpadding="6" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Budgeted</th>
+        <th>Spent</th>
+        <th>Remaining</th>
+      </tr>
+    </thead>
+    <tbody id="budget-breakdown-body"></tbody>
+  </table>
+</section>
+
+<script id="initial-dashboard-data" type="application/json">{{ snapshot|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,7 @@
+Flask
+python-dotenv
+mysql-connector-python
+Werkzeug
+pandas
+pytest
+Flask-Bcrypt

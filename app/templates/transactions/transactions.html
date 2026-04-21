@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions | CS4750 Finance Tracker{% endblock %}
+
+{% block content %}
+<section>
+  <h2>Transactions</h2>
+  <p>Manage your own transactions with filtering, sorting, and inline updates.</p>
+</section>
+
+<section>
+  <h3>Filters</h3>
+  <form id="transaction-filters" autocomplete="off">
+    <label for="filter-start-date">Start Date</label>
+    <input
+      id="filter-start-date"
+      name="start_date"
+      type="date"
+      value="{{ filters.start_date or '' }}"
+    />
+
+    <label for="filter-end-date">End Date</label>
+    <input
+      id="filter-end-date"
+      name="end_date"
+      type="date"
+      value="{{ filters.end_date or '' }}"
+    />
+
+    <label for="filter-account">Account</label>
+    <select id="filter-account" name="account_id">
+      <option value="">All Accounts</option>
+      {% for account in accounts %}
+      <option
+        value="{{ account.account_id }}"
+        {% if filters.account_id == account.account_id %}selected{% endif %}
+      >
+        {{ account.account_name }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="filter-category">Category</label>
+    <select id="filter-category" name="category_id">
+      <option value="">All Categories</option>
+      {% for category in categories %}
+      <option
+        value="{{ category.category_id }}"
+        {% if filters.category_id == category.category_id %}selected{% endif %}
+      >
+        {{ category.category_name }} ({{ category.category_type }})
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="filter-keyword">Keyword</label>
+    <input
+      id="filter-keyword"
+      name="keyword"
+      type="text"
+      placeholder="Search description"
+      value="{{ filters.keyword or '' }}"
+    />
+
+    <label for="sort-by">Sort By</label>
+    <select id="sort-by" name="sort_by">
+      <option value="date" {% if filters.sort_by == 'date' %}selected{% endif %}>Date</option>
+      <option value="amount" {% if filters.sort_by == 'amount' %}selected{% endif %}>Amount</option>
+    </select>
+
+    <label for="sort-dir">Direction</label>
+    <select id="sort-dir" name="sort_dir">
+      <option value="desc" {% if filters.sort_dir == 'desc' %}selected{% endif %}>Descending</option>
+      <option value="asc" {% if filters.sort_dir == 'asc' %}selected{% endif %}>Ascending</option>
+    </select>
+
+    <button type="submit">Apply Filters</button>
+    <button type="button" id="reset-filters">Reset</button>
+  </form>
+</section>
+
+<section>
+  <h3>Add Transaction</h3>
+  <form id="create-transaction-form" autocomplete="off">
+    <label for="create-transaction-type">Type</label>
+    <select id="create-transaction-type" name="transaction_type" required>
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+    </select>
+
+    <label for="create-amount">Amount</label>
+    <input id="create-amount" name="amount" type="number" min="0.01" step="0.01" required />
+
+    <label for="create-date">Date</label>
+    <input id="create-date" name="transaction_date" type="date" required />
+
+    <label for="create-account">Account</label>
+    <select id="create-account" name="account_id" required>
+      <option value="" disabled selected>Select account</option>
+      {% for account in accounts %}
+      <option value="{{ account.account_id }}">{{ account.account_name }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="create-category">Category</label>
+    <select id="create-category" name="category_id" required>
+      <option value="" disabled selected>Select category</option>
+      {% for category in categories %}
+      <option value="{{ category.category_id }}">{{ category.category_name }} ({{ category.category_type }})</option>
+      {% endfor %}
+    </select>
+
+    <label for="create-description">Description</label>
+    <input id="create-description" name="description" type="text" maxlength="255" />
+
+    <button type="submit">Create Transaction</button>
+  </form>
+</section>
+
+<section>
+  <h3>Edit Transaction</h3>
+  <form id="edit-transaction-form" autocomplete="off" hidden>
+    <input id="edit-transaction-id" name="transaction_id" type="hidden" />
+
+    <label for="edit-transaction-type">Type</label>
+    <select id="edit-transaction-type" name="transaction_type" required>
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+    </select>
+
+    <label for="edit-amount">Amount</label>
+    <input id="edit-amount" name="amount" type="number" min="0.01" step="0.01" required />
+
+    <label for="edit-date">Date</label>
+    <input id="edit-date" name="transaction_date" type="date" required />
+
+    <label for="edit-account">Account</label>
+    <select id="edit-account" name="account_id" required>
+      {% for account in accounts %}
+      <option value="{{ account.account_id }}">{{ account.account_name }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="edit-category">Category</label>
+    <select id="edit-category" name="category_id" required>
+      {% for category in categories %}
+      <option value="{{ category.category_id }}">{{ category.category_name }} ({{ category.category_type }})</option>
+      {% endfor %}
+    </select>
+
+    <label for="edit-description">Description</label>
+    <input id="edit-description" name="description" type="text" maxlength="255" />
+
+    <button type="submit">Save Changes</button>
+    <button type="button" id="cancel-edit">Cancel</button>
+  </form>
+</section>
+
+<section>
+  <h3>Your Transactions</h3>
+  <p id="transactions-message" role="status"></p>
+  <table id="transactions-table" border="1" cellpadding="6" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Description</th>
+        <th>Account</th>
+        <th>Category</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="transactions-table-body">
+      {% for tx in transactions %}
+      <tr
+        data-transaction-id="{{ tx.transaction_id }}"
+        data-transaction-type="{{ tx.transaction_type }}"
+        data-amount="{{ tx.amount }}"
+        data-date="{{ tx.transaction_date }}"
+        data-description="{{ (tx.description or '')|urlencode }}"
+        data-account-id="{{ tx.account_id or '' }}"
+        data-category-id="{{ tx.category_id or '' }}"
+      >
+        <td>{{ tx.transaction_date }}</td>
+        <td>{{ tx.transaction_type }}</td>
+        <td>{{ "%.2f"|format(tx.amount) }}</td>
+        <td>{{ tx.description or '' }}</td>
+        <td>{{ tx.account_name or 'N/A' }}</td>
+        <td>{{ tx.category_name or 'N/A' }}</td>
+        <td>
+          <button class="edit-transaction" type="button">Edit</button>
+          <button class="delete-transaction" type="button">Delete</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script id="initial-transactions-data" type="application/json">{{ transactions|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+{% endblock %}
