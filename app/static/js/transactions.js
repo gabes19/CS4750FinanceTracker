@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetFiltersBtn = document.getElementById("reset-filters");
   const createForm = document.getElementById("create-transaction-form");
   const editForm = document.getElementById("edit-transaction-form");
+  const editPlaceholder = document.getElementById("transaction-edit-placeholder");
   const cancelEditBtn = document.getElementById("cancel-edit");
   const tableBody = document.getElementById("transactions-table-body");
   const messageEl = document.getElementById("transactions-message");
@@ -49,6 +50,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     createForm.reset();
+    const createType = document.getElementById("create-transaction-type");
+    if (createType) {
+      createType.value = "expense";
+    }
     setMessage("Transaction created.", false);
     notifyFinanceDataChanged("transaction_created");
     await refreshTransactions();
@@ -167,6 +172,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const descriptionEncoded = encodeURIComponent(descriptionRaw);
         const accountName = escapeHtml(tx.account_name || "N/A");
         const categoryName = escapeHtml(tx.category_name || "N/A");
+        const txType = String(tx.transaction_type || "expense");
+        const amountDisplay = `${txType === "income" ? "+" : "-"}${amount}`;
+        const amountClass = txType === "income" ? "tx-amount-income" : "tx-amount-expense";
+        const typeTagClass = txType === "income" ? "tx-type-income" : "tx-type-expense";
 
         return `
           <tr
@@ -179,12 +188,12 @@ document.addEventListener("DOMContentLoaded", () => {
             data-category-id="${tx.category_id ?? ""}"
           >
             <td>${tx.transaction_date}</td>
-            <td>${tx.transaction_type}</td>
-            <td>${amount}</td>
+            <td><span class="tx-type-tag ${typeTagClass}">${txType}</span></td>
+            <td class="${amountClass}">${amountDisplay}</td>
             <td>${description}</td>
             <td>${accountName}</td>
-            <td>${categoryName}</td>
-            <td>
+            <td><span class="tx-category-pill">${categoryName}</span></td>
+            <td class="tx-actions-cell">
               <button class="edit-transaction" type="button">Edit</button>
               <button class="delete-transaction" type="button">Delete</button>
             </td>
@@ -243,6 +252,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     editForm.hidden = false;
+    if (editPlaceholder) {
+      editPlaceholder.hidden = true;
+    }
     editForm.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
@@ -252,6 +264,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     editForm.reset();
     editForm.hidden = true;
+    if (editPlaceholder) {
+      editPlaceholder.hidden = false;
+    }
   }
 
   function setMessage(message, isError) {

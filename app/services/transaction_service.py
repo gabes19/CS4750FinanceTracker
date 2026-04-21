@@ -657,7 +657,7 @@ def _assert_budget_limit(
     amount: Decimal,
     exclude_transaction_id: int | None,
 ) -> None:
-    """Block expense inserts/updates that exceed configured monthly budget."""
+    """Block expense inserts/updates that exceed category allocation limits."""
 
     if transaction_type != "expense":
         return
@@ -666,7 +666,7 @@ def _assert_budget_limit(
 
     cursor.execute(
         """
-        SELECT COALESCE(SUM(b.monthly_limit), 0) AS budget_limit
+        SELECT COALESCE(SUM(a.allocated_limit), 0) AS budget_limit
         FROM budget b
         INNER JOIN user_sets us ON us.budget_id = b.budget_id
         INNER JOIN applies_to a ON a.budget_id = b.budget_id
@@ -706,7 +706,7 @@ def _assert_budget_limit(
 
     if spent + amount > budget_limit:
         raise TransactionValidationError(
-            "Expense exceeds this category's monthly budget for the user."
+            "Expense exceeds the monthly allocation for this category."
         )
 
 

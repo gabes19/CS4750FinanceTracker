@@ -142,3 +142,392 @@ canvas {
   background: #ffffff;
   border-radius: 6px;
 }
+
+.auth-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(125deg, #eff6ff 0%, #f0f9ff 48%, #ecfeff 100%);
+}
+
+.auth-hero::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -80px;
+  top: -120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.22) 0%, rgba(37, 99, 235, 0) 70%);
+  pointer-events: none;
+}
+
+.auth-hero h2 {
+  margin-bottom: 0.55rem;
+}
+
+.auth-hero p {
+  max-width: 700px;
+  margin: 0;
+  color: #334155;
+}
+
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.auth-card,
+.auth-session-card,
+.auth-demo-card,
+.auth-status {
+  border: 1px solid #dbeafe;
+  background: #ffffff;
+}
+
+.auth-card {
+  animation: auth-fade-up 280ms ease-out;
+}
+
+.auth-subtitle {
+  margin: 0 0 0.8rem;
+  color: #475569;
+}
+
+.auth-form {
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+  align-items: start;
+}
+
+.auth-form label {
+  margin-top: 0.1rem;
+  font-weight: 600;
+}
+
+.auth-form input {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.auth-form input:focus {
+  border-color: #2563eb;
+  outline: 2px solid rgba(37, 99, 235, 0.2);
+  background: #ffffff;
+}
+
+.auth-form button {
+  margin-top: 0.5rem;
+}
+
+.auth-help-text {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.auth-status-message {
+  margin: 0.4rem 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.94rem;
+}
+
+.auth-status-message.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.auth-status-message.is-success {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #047857;
+}
+
+@keyframes auth-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 840px) {
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.budgets-hero {
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(125deg, #f8fafc 0%, #eef2ff 60%, #eff6ff 100%);
+}
+
+.budget-filter-card {
+  border: 1px solid #dbeafe;
+}
+
+.budget-filter-form {
+  grid-template-columns: minmax(180px, 240px) auto;
+  align-items: end;
+}
+
+.budget-forms-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.budget-card {
+  border: 1px solid #dbeafe;
+  background: #fff;
+}
+
+.budget-form {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.category-picker {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin: 0.35rem 0 0.25rem;
+  background: #f8fbff;
+}
+
+.category-picker legend {
+  font-weight: 600;
+  color: #1e3a8a;
+  padding: 0 0.35rem;
+}
+
+.category-picker-help {
+  margin: 0 0 0.65rem;
+  font-size: 0.86rem;
+  color: #475569;
+}
+
+.category-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.category-groups h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.budget-allocation-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.budget-allocation-row {
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 0.6rem;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.budget-allocation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.budget-allocation-toggle input {
+  width: auto;
+  margin: 0;
+}
+
+.budget-allocation-name {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.category-allocation-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.42rem;
+  font-size: 0.85rem;
+}
+
+.category-allocation-input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+#budget-edit-placeholder {
+  margin-top: 0.75rem;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.budget-category-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.budget-category-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  padding: 0.22rem 0.45rem;
+  background: #f8fbff;
+  font-size: 0.84rem;
+}
+
+.budget-category-list strong {
+  color: #1d4ed8;
+}
+
+@media (max-width: 760px) {
+  .budget-filter-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.transactions-hero {
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(125deg, #f8fafc 0%, #ecfeff 55%, #eff6ff 100%);
+}
+
+.transactions-filter-card {
+  border: 1px solid #dbeafe;
+}
+
+.transactions-filter-form {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.7rem 0.85rem;
+  align-items: start;
+}
+
+.tx-filter-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.tx-filter-field-wide {
+  grid-column: 1 / -1;
+}
+
+.tx-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.tx-filter-actions button {
+  width: auto;
+  min-width: 140px;
+}
+
+.transactions-forms-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.transactions-card {
+  border: 1px solid #dbeafe;
+  background: #fff;
+}
+
+.transaction-form {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+#transaction-edit-placeholder {
+  margin-top: 0.75rem;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+#transactions-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.tx-type-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+
+.tx-type-income {
+  border-color: #a7f3d0;
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.tx-type-expense {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.tx-amount-income {
+  color: #047857;
+  font-weight: 600;
+}
+
+.tx-amount-expense {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.tx-category-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  font-size: 0.82rem;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.tx-actions-cell {
+  white-space: nowrap;
+}
+
+.tx-actions-cell button {
+  width: auto;
+  padding: 0.25rem 0.6rem;
+  margin-right: 0.3rem;
+}
+
+@media (max-width: 760px) {
+  .tx-actions-cell {
+    white-space: normal;
+  }
+
+  .tx-filter-actions button {
+    width: 100%;
+  }
+}

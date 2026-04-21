@@ -1,3 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("Auth page loaded.");
+  const emailField =
+    document.getElementById("login-email") ||
+    document.getElementById("register-email");
+  emailField?.focus();
 });

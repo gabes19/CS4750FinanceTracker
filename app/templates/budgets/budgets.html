@@ -3,14 +3,14 @@
 {% block title %}Budgets | CS4750 Finance Tracker{% endblock %}
 
 {% block content %}
-<section>
+<section class="budgets-hero">
   <h2>Budgets</h2>
-  <p>Set monthly budget limits by category for your account.</p>
+  <p>Create monthly limits and attach one or more categories with simpler, faster selection.</p>
 </section>
 
-<section>
+<section class="budget-filter-card">
   <h3>Month Filter</h3>
-  <form id="budget-filters" autocomplete="off">
+  <form id="budget-filters" class="budget-filter-form" autocomplete="off">
     <label for="budget-filter-month">Month</label>
     <input
       id="budget-filter-month"
@@ -23,74 +23,169 @@
   </form>
 </section>
 
-<section>
-  <h3>Add Budget</h3>
-  <form id="create-budget-form" autocomplete="off">
-    <label for="create-budget-name">Budget Name</label>
-    <input id="create-budget-name" name="budget_name" type="text" maxlength="100" required />
+<div class="budget-forms-grid">
+  <section class="budget-card">
+    <h3>Add Budget</h3>
+    <form id="create-budget-form" class="budget-form" autocomplete="off">
+      <label for="create-budget-name">Budget Name</label>
+      <input id="create-budget-name" name="budget_name" type="text" maxlength="100" required />
 
-    <label for="create-budget-month">Month</label>
-    <input
-      id="create-budget-month"
-      name="budget_month"
-      type="month"
-      value="{{ filters.month or '' }}"
-      required
-    />
+      <label for="create-budget-month">Month</label>
+      <input
+        id="create-budget-month"
+        name="budget_month"
+        type="month"
+        value="{{ filters.month or '' }}"
+        required
+      />
 
-    <label for="create-monthly-limit">Monthly Limit</label>
-    <input
-      id="create-monthly-limit"
-      name="monthly_limit"
-      type="number"
-      min="0"
-      step="0.01"
-      required
-    />
+      <label for="create-monthly-limit">Monthly Limit</label>
+      <input
+        id="create-monthly-limit"
+        name="monthly_limit"
+        type="number"
+        min="0"
+        step="0.01"
+        required
+      />
 
-    <label for="create-category-ids">Categories</label>
-    <select id="create-category-ids" name="category_ids" multiple required size="6">
-      {% for category in categories %}
-      <option value="{{ category.category_id }}">{{ category.category_name }} ({{ category.category_type }})</option>
-      {% endfor %}
-    </select>
+      <fieldset class="category-picker">
+        <legend>Categories</legend>
+        <p class="category-picker-help">Select one or more categories.</p>
+        <div class="category-groups">
+          <div>
+            <h4>Expense</h4>
+            <div class="budget-allocation-grid">
+              {% for category in categories if category.category_type == 'expense' %}
+              <div class="budget-allocation-row">
+                <label class="budget-allocation-toggle">
+                  <input type="checkbox" name="category_ids" value="{{ category.category_id }}" />
+                  <span class="budget-allocation-name">{{ category.category_name }}</span>
+                </label>
+                <input
+                  class="category-allocation-input budget-allocation-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                  data-category-allocation="{{ category.category_id }}"
+                  disabled
+                />
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <h4>Income</h4>
+            <div class="budget-allocation-grid">
+              {% for category in categories if category.category_type == 'income' %}
+              <div class="budget-allocation-row">
+                <label class="budget-allocation-toggle">
+                  <input type="checkbox" name="category_ids" value="{{ category.category_id }}" />
+                  <span class="budget-allocation-name">{{ category.category_name }}</span>
+                </label>
+                <input
+                  class="category-allocation-input budget-allocation-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                  data-category-allocation="{{ category.category_id }}"
+                  disabled
+                />
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </fieldset>
 
-    <button type="submit">Create Budget</button>
-  </form>
-</section>
+      <button type="submit">Create Budget</button>
+    </form>
+  </section>
 
-<section>
-  <h3>Edit Budget</h3>
-  <form id="edit-budget-form" autocomplete="off" hidden>
-    <input id="edit-budget-id" name="budget_id" type="hidden" />
+  <section class="budget-card">
+    <h3>Edit Budget</h3>
+    <form id="edit-budget-form" class="budget-form" autocomplete="off" hidden>
+      <input id="edit-budget-id" name="budget_id" type="hidden" />
 
-    <label for="edit-budget-name">Budget Name</label>
-    <input id="edit-budget-name" name="budget_name" type="text" maxlength="100" required />
+      <label for="edit-budget-name">Budget Name</label>
+      <input id="edit-budget-name" name="budget_name" type="text" maxlength="100" required />
 
-    <label for="edit-budget-month">Month</label>
-    <input id="edit-budget-month" name="budget_month" type="month" required />
+      <label for="edit-budget-month">Month</label>
+      <input id="edit-budget-month" name="budget_month" type="month" required />
 
-    <label for="edit-monthly-limit">Monthly Limit</label>
-    <input
-      id="edit-monthly-limit"
-      name="monthly_limit"
-      type="number"
-      min="0"
-      step="0.01"
-      required
-    />
+      <label for="edit-monthly-limit">Monthly Limit</label>
+      <input
+        id="edit-monthly-limit"
+        name="monthly_limit"
+        type="number"
+        min="0"
+        step="0.01"
+        required
+      />
 
-    <label for="edit-category-ids">Categories</label>
-    <select id="edit-category-ids" name="category_ids" multiple required size="6">
-      {% for category in categories %}
-      <option value="{{ category.category_id }}">{{ category.category_name }} ({{ category.category_type }})</option>
-      {% endfor %}
-    </select>
+      <fieldset class="category-picker">
+        <legend>Categories</legend>
+        <p class="category-picker-help">Select one or more categories.</p>
+        <div class="category-groups">
+          <div>
+            <h4>Expense</h4>
+            <div class="budget-allocation-grid">
+              {% for category in categories if category.category_type == 'expense' %}
+              <div class="budget-allocation-row">
+                <label class="budget-allocation-toggle">
+                  <input type="checkbox" name="category_ids" value="{{ category.category_id }}" />
+                  <span class="budget-allocation-name">{{ category.category_name }}</span>
+                </label>
+                <input
+                  class="category-allocation-input budget-allocation-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                  data-category-allocation="{{ category.category_id }}"
+                  disabled
+                />
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <h4>Income</h4>
+            <div class="budget-allocation-grid">
+              {% for category in categories if category.category_type == 'income' %}
+              <div class="budget-allocation-row">
+                <label class="budget-allocation-toggle">
+                  <input type="checkbox" name="category_ids" value="{{ category.category_id }}" />
+                  <span class="budget-allocation-name">{{ category.category_name }}</span>
+                </label>
+                <input
+                  class="category-allocation-input budget-allocation-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                  data-category-allocation="{{ category.category_id }}"
+                  disabled
+                />
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </fieldset>
 
-    <button type="submit">Save Changes</button>
-    <button type="button" id="cancel-budget-edit">Cancel</button>
-  </form>
-</section>
+      <button type="submit">Save Changes</button>
+      <button type="button" id="cancel-budget-edit">Cancel</button>
+    </form>
+    <p id="budget-edit-placeholder">Select a budget from the table below to edit it.</p>
+  </section>
+</div>
 
 <section>
   <h3>Your Budgets</h3>
@@ -113,13 +208,21 @@
         data-budget-month="{{ budget.budget_month[:7] }}"
         data-monthly-limit="{{ budget.monthly_limit }}"
         data-category-ids="{{ budget.category_ids|join(',') }}"
+        data-category-allocations="{{ budget.category_allocations|tojson|urlencode }}"
       >
         <td>{{ budget.budget_name }}</td>
         <td>{{ budget.budget_month[:7] }}</td>
         <td>{{ "%.2f"|format(budget.monthly_limit) }}</td>
         <td>
           {% if budget.categories %}
-            {{ budget.categories | map(attribute='category_name') | join(', ') }}
+          <ul class="budget-category-list">
+            {% for category in budget.categories %}
+            <li>
+              <span>{{ category.category_name }}</span>
+              <strong>{{ "%.2f"|format(category.allocated_limit or 0) }}</strong>
+            </li>
+            {% endfor %}
+          </ul>
           {% else %}
             N/A
           {% endif %}

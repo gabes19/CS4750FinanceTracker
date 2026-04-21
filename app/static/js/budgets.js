@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const filtersForm = document.getElementById("budget-filters");
   const createForm = document.getElementById("create-budget-form");
   const editForm = document.getElementById("edit-budget-form");
+  const editPlaceholder = document.getElementById("budget-edit-placeholder");
   const cancelEditBtn = document.getElementById("cancel-budget-edit");
   const tableBody = document.getElementById("budgets-table-body");
   const messageEl = document.getElementById("budgets-message");
@@ -17,6 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderBudgets(budgets);
+  initializeCategoryAllocationInputs(createForm);
+  initializeCategoryAllocationInputs(editForm);
 
   filtersForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -26,7 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
   createForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const payload = budgetPayloadFromForm(createForm);
+    let payload;
+    try {
+      payload = budgetPayloadFromForm(createForm);
+    } catch (err) {
+      setMessage(err.message || "Invalid budget form input.", true);
+      return;
+    }
     const response = await fetch("/budgets/api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -40,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     createForm.reset();
+    clearCategorySelections(createForm);
     setMessage("Budget created.", false);
     notifyFinanceDataChanged("budget_created");
     await refreshBudgets();
@@ -58,7 +68,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const payload = budgetPayloadFromForm(editForm);
+    let payload;
+    try {
+      payload = budgetPayloadFromForm(editForm);
+    } catch (err) {
+      setMessage(err.message || "Invalid budget form input.", true);
+      return;
+    }
 
     const response = await fetch(`/budgets/api/${budgetId}`, {
       method: "PUT",
@@ -156,9 +172,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const categoryIds = Array.isArray(budget.category_ids)
           ? budget.category_ids.join(",")
           : "";
-        const categoryNames = Array.isArray(budget.categories)
-          ? budget.categories.map((cat) => cat.category_name).join(", ")
-          : "N/A";
+        const categoryAllocations = budget.category_allocations || {};
+        const categoryAllocationsEncoded = encodeURIComponent(
+          JSON.stringify(categoryAllocations)
+        );
+        const categoriesHtml =
+          Array.isArray(budget.categories) && budget.categories.length > 0
+            ? `<ul class="budget-category-list">${budget.categories
+                .map(
+                  (cat) =>
+                    `<li><span>${escapeHtml(cat.category_name || "")}</span><strong>${Number(
+                      cat.allocated_limit || 0
+                    ).toFixed(2)}</strong></li>`
+                )
+                .join("")}</ul>`
+            : "N/A";
         const budgetNameRaw = String(budget.budget_name || "");
         const budgetNameEncoded = encodeURIComponent(budgetNameRaw);
         const month = String(budget.budget_month || "").slice(0, 7);
@@ -170,11 +198,12 @@ document.addEventListener("DOMContentLoaded", () => {
             data-budget-month="${month}"
             data-monthly-limit="${Number(budget.monthly_limit || 0).toFixed(2)}"
             data-category-ids="${categoryIds}"
+            data-category-allocations="${categoryAllocationsEncoded}"
           >
             <td>${escapeHtml(budgetNameRaw)}</td>
             <td>${month}</td>
             <td>${Number(budget.monthly_limit || 0).toFixed(2)}</td>
-            <td>${escapeHtml(categoryNames)}</td>
+            <td>${categoriesHtml}</td>
             <td>
               <button type="button" class="edit-budget">Edit</button>
               <button type="button" class="delete-budget">Delete</button>
@@ -187,16 +216,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function budgetPayloadFromForm(formEl) {
     const formData = new FormData(formEl);
-    const categorySelect = formEl.querySelector("select[name='category_ids']");
-    const categoryIds = categorySelect
-      ? Array.from(categorySelect.selectedOptions).map((option) => option.value)
-      : [];
+    const categoryCheckboxes = Array.from(
+      formEl.querySelectorAll("input[name='category_ids']:checked")
+    );
+    const categoryIds = categoryCheckboxes.map((checkbox) => checkbox.value);
+
+    if (categoryIds.length === 0) {
+      throw new Error("Select at least one category.");
+    }
+
+    const monthlyLimit = String(formData.get("monthly_limit") || "").trim();
+    const monthlyLimitNum = Number(monthlyLimit);
+    if (!Number.isFinite(monthlyLimitNum) || monthlyLimitNum < 0) {
+      throw new Error("Enter a valid monthly limit.");
+    }
+
+    const categoryAllocations = {};
+    let allocationSum = 0;
+    for (const checkbox of categoryCheckboxes) {
+      const allocationInput = formEl.querySelector(
+        `input[data-category-allocation='${checkbox.value}']`
+      );
+      const allocationValue = String(allocationInput?.value || "").trim();
+      const allocationNum = Number(allocationValue);
+      if (!Number.isFinite(allocationNum) || allocationNum < 0) {
+        throw new Error("Each selected category must have a valid allocation amount.");
+      }
+      categoryAllocations[String(checkbox.value)] = allocationValue;
+      allocationSum += allocationNum;
+    }
+
+    if (Math.abs(allocationSum - monthlyLimitNum) > 0.0001) {
+      throw new Error("Category allocations must add up exactly to the monthly limit.");
+    }
 
     return {
       budget_name: String(formData.get("budget_name") || "").trim(),
       budget_month: String(formData.get("budget_month") || "").trim(),
-      monthly_limit: String(formData.get("monthly_limit") || "").trim(),
+      monthly_limit: monthlyLimit,
       category_ids: categoryIds,
+      category_allocations: categoryAllocations,
     };
   }
 
@@ -209,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const nameEl = document.getElementById("edit-budget-name");
     const monthEl = document.getElementById("edit-budget-month");
     const limitEl = document.getElementById("edit-monthly-limit");
-    const categoriesEl = document.getElementById("edit-category-ids");
 
     if (idEl) {
       idEl.value = dataset.budgetId || "";
@@ -225,19 +283,22 @@ document.addEventListener("DOMContentLoaded", () => {
       limitEl.value = dataset.monthlyLimit || "0.00";
     }
 
-    if (categoriesEl) {
-      const selected = new Set(
-        String(dataset.categoryIds || "")
-          .split(",")
-          .map((value) => value.trim())
-          .filter((value) => value)
-      );
-      Array.from(categoriesEl.options).forEach((option) => {
-        option.selected = selected.has(option.value);
-      });
-    }
+    const selected = new Set(
+      String(dataset.categoryIds || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter((value) => value)
+    );
+    setCategorySelections(editForm, selected);
+    setCategoryAllocations(
+      editForm,
+      parseCategoryAllocations(dataset.categoryAllocations)
+    );
 
     editForm.hidden = false;
+    if (editPlaceholder) {
+      editPlaceholder.hidden = true;
+    }
     editForm.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
@@ -246,7 +307,87 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     editForm.reset();
+    clearCategorySelections(editForm);
     editForm.hidden = true;
+    if (editPlaceholder) {
+      editPlaceholder.hidden = false;
+    }
+  }
+
+  function setCategorySelections(formEl, selectedValues) {
+    Array.from(formEl.querySelectorAll("input[name='category_ids']")).forEach((checkbox) => {
+      checkbox.checked = selectedValues.has(checkbox.value);
+      toggleAllocationInput(formEl, checkbox);
+    });
+  }
+
+  function clearCategorySelections(formEl) {
+    setCategorySelections(formEl, new Set());
+    setCategoryAllocations(formEl, {});
+  }
+
+  function initializeCategoryAllocationInputs(formEl) {
+    if (!formEl) {
+      return;
+    }
+    Array.from(formEl.querySelectorAll("input[name='category_ids']")).forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        toggleAllocationInput(formEl, checkbox);
+      });
+      toggleAllocationInput(formEl, checkbox);
+    });
+
+    Array.from(formEl.querySelectorAll("input[data-category-allocation]")).forEach((inputEl) => {
+      inputEl.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+    });
+  }
+
+  function toggleAllocationInput(formEl, checkbox) {
+    const allocationInput = formEl.querySelector(
+      `input[data-category-allocation='${checkbox.value}']`
+    );
+    if (!allocationInput) {
+      return;
+    }
+
+    if (checkbox.checked) {
+      allocationInput.disabled = false;
+      allocationInput.required = true;
+      if (!allocationInput.value) {
+        allocationInput.value = "0.00";
+      }
+    } else {
+      allocationInput.disabled = true;
+      allocationInput.required = false;
+      allocationInput.value = "";
+    }
+  }
+
+  function setCategoryAllocations(formEl, allocations) {
+    Array.from(formEl.querySelectorAll("input[data-category-allocation]")).forEach((inputEl) => {
+      const categoryId = String(inputEl.dataset.categoryAllocation || "");
+      const value = allocations[categoryId];
+      inputEl.value =
+        value !== undefined && value !== null && value !== ""
+          ? Number(value).toFixed(2)
+          : "";
+    });
+  }
+
+  function parseCategoryAllocations(rawValue) {
+    if (!rawValue) {
+      return {};
+    }
+
+    try {
+      const decoded = decodeURIComponent(String(rawValue).replaceAll("+", "%20"));
+      const parsed = JSON.parse(decoded);
+      return typeof parsed === "object" && parsed !== null ? parsed : {};
+    } catch (_err) {
+      return {};
+    }
   }
 
   function setMessage(message, isError) {

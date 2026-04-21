@@ -26,8 +26,20 @@ A Flask + MySQL web application scaffold for a multi-user personal finance and b
    - `mysql -u root -p < app/db/procedures.sql`
    - `mysql -u root -p < app/db/seed.sql`
    - `mysql -u root -p < app/db/privileges.sql`
+   - If your DB was created before category-allocation budgets were added, run:
+     - `mysql -u root -p < app/db/patch_budget_allocations.sql`
+     - `mysql -u root -p < app/db/procedures.sql`
 6. Run the app:
    - `python run.py`
+7. Open `http://127.0.0.1:5001` and sign in via `Auth`.
+
+## Demo Login Accounts
+
+After running `seed.sql`, you can use:
+
+- `alice@example.com` / `alice123`
+- `bob@example.com` / `bob123`
+- `carla@example.com` / `carla123`
 
 ## Database SQL Files
 

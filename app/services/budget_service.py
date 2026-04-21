@@ -90,7 +90,8 @@ def list_user_budgets(user_id: int, filters: BudgetFilters) -> list[dict[str, An
               b.monthly_limit,
               c.category_id,
               c.category_name,
-              c.category_type
+              c.category_type,
+              ap.allocated_limit
             FROM user_sets us
             INNER JOIN budget b ON b.budget_id = us.budget_id
             LEFT JOIN applies_to ap ON ap.budget_id = b.budget_id
@@ -123,7 +124,8 @@ def get_budget_by_id_for_user(user_id: int, budget_id: int) -> dict[str, Any]:
               b.monthly_limit,
               c.category_id,
               c.category_name,
-              c.category_type
+              c.category_type,
+              ap.allocated_limit
             FROM user_sets us
             INNER JOIN budget b ON b.budget_id = us.budget_id
             LEFT JOIN applies_to ap ON ap.budget_id = b.budget_id
@@ -156,8 +158,6 @@ def create_budget(user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
     try:
         _assert_categories_available(cursor, user_id=user_id, category_ids=data["category_ids"])
 
-        conn.start_transaction()
-
         cursor.execute(
             """
             INSERT INTO budget (budget_name, budget_month, monthly_limit)
@@ -173,8 +173,11 @@ def create_budget(user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
         )
 
         cursor.executemany(
-            "INSERT INTO applies_to (budget_id, category_id) VALUES (%s, %s)",
-            [(budget_id, category_id) for category_id in data["category_ids"]],
+            "INSERT INTO applies_to (budget_id, category_id, allocated_limit) VALUES (%s, %s, %s)",
+            [
+                (budget_id, category_id, data["category_allocations"][category_id])
+                for category_id in data["category_ids"]
+            ],
         )
 
         conn.commit()
@@ -203,8 +206,6 @@ def update_budget(user_id: int, budget_id: int, payload: dict[str, Any]) -> dict
         _assert_budget_updatable_by_user(cursor, user_id=user_id, budget_id=budget_id)
         _assert_categories_available(cursor, user_id=user_id, category_ids=data["category_ids"])
 
-        conn.start_transaction()
-
         cursor.execute(
             """
             UPDATE budget
@@ -223,8 +224,11 @@ def update_budget(user_id: int, budget_id: int, payload: dict[str, Any]) -> dict
 
         cursor.execute("DELETE FROM applies_to WHERE budget_id = %s", (budget_id,))
         cursor.executemany(
-            "INSERT INTO applies_to (budget_id, category_id) VALUES (%s, %s)",
-            [(budget_id, category_id) for category_id in data["category_ids"]],
+            "INSERT INTO applies_to (budget_id, category_id, allocated_limit) VALUES (%s, %s, %s)",
+            [
+                (budget_id, category_id, data["category_allocations"][category_id])
+                for category_id in data["category_ids"]
+            ],
         )
 
         conn.commit()
@@ -262,7 +266,6 @@ def delete_budget(user_id: int, budget_id: int) -> None:
         )
         user_count = int(cursor.fetchone()["user_count"])
 
-        conn.start_transaction()
         cursor.execute(
             "DELETE FROM user_sets WHERE user_id = %s AND budget_id = %s",
             (user_id, budget_id),
@@ -390,11 +393,22 @@ def _normalize_payload(payload: dict[str, Any]) -> dict[str, Any]:
     if not category_ids:
         raise BudgetValidationError("At least one category must be selected.")
 
+    category_allocations = _normalize_category_allocations(
+        payload.get("category_allocations"),
+        category_ids=category_ids,
+    )
+    allocations_total = sum(category_allocations.values(), start=Decimal("0.00"))
+    if allocations_total != monthly_limit:
+        raise BudgetValidationError(
+            "The sum of category allocations must equal monthly_limit."
+        )
+
     return {
         "budget_name": budget_name,
         "budget_month": budget_month,
         "monthly_limit": monthly_limit,
         "category_ids": category_ids,
+        "category_allocations": category_allocations,
     }
 
 
@@ -446,6 +460,50 @@ def _normalize_category_ids(raw_value: Any) -> list[int]:
     return deduped
 
 
+def _normalize_category_allocations(
+    raw_value: Any,
+    *,
+    category_ids: list[int],
+) -> dict[int, Decimal]:
+    """Parse and validate category allocation values for selected categories."""
+
+    category_id_set = set(category_ids)
+    allocations_raw: dict[str, Any]
+
+    if raw_value is None:
+        raise BudgetValidationError("category_allocations is required.")
+    if isinstance(raw_value, dict):
+        allocations_raw = raw_value
+    else:
+        raise BudgetValidationError("category_allocations must be an object.")
+
+    parsed: dict[int, Decimal] = {}
+    for key, value in allocations_raw.items():
+        try:
+            category_id = int(key)
+        except (TypeError, ValueError) as exc:
+            raise BudgetValidationError("category_allocations keys must be category IDs.") from exc
+
+        if category_id not in category_id_set:
+            continue
+
+        try:
+            amount = Decimal(str(value)).quantize(Decimal("0.01"))
+        except Exception as exc:
+            raise BudgetValidationError("Each category allocation must be a valid decimal.") from exc
+
+        if amount < 0:
+            raise BudgetValidationError("Category allocations must be non-negative.")
+
+        parsed[category_id] = amount
+
+    missing = [category_id for category_id in category_ids if category_id not in parsed]
+    if missing:
+        raise BudgetValidationError("Every selected category must have an allocation amount.")
+
+    return parsed
+
+
 def _group_budget_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Group joined budget rows into nested budget records with categories list."""
 
@@ -477,8 +535,14 @@ def _group_budget_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "category_id": int(category_id),
                 "category_name": row.get("category_name"),
                 "category_type": row.get("category_type"),
+                "allocated_limit": (
+                    float(row.get("allocated_limit"))
+                    if isinstance(row.get("allocated_limit"), Decimal)
+                    else row.get("allocated_limit")
+                ),
             }
             existing["categories"].append(category_obj)
             existing["category_ids"].append(int(category_id))
+            existing.setdefault("category_allocations", {})[str(int(category_id))] = category_obj["allocated_limit"]
 
     return list(grouped.values())

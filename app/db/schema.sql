@@ -193,8 +193,10 @@ CREATE TABLE user_sets (
 CREATE TABLE applies_to (
   budget_id INT UNSIGNED NOT NULL,
   category_id INT UNSIGNED NOT NULL,
+  allocated_limit DECIMAL(12,2) NOT NULL,
   applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (budget_id, category_id),
+  CONSTRAINT chk_applies_to_allocated_non_negative CHECK (allocated_limit >= 0),
   CONSTRAINT fk_applies_to_budget
     FOREIGN KEY (budget_id) REFERENCES budget (budget_id)
     ON DELETE CASCADE ON UPDATE CASCADE,

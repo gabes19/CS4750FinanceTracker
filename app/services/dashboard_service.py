@@ -139,9 +139,9 @@ def _get_budget_remaining_by_category(
         SELECT
           c.category_id,
           c.category_name,
-          COALESCE(SUM(b.monthly_limit), 0) AS total_budget,
+          COALESCE(SUM(ap.allocated_limit), 0) AS total_budget,
           COALESCE(spent.spent_amount, 0) AS total_spent,
-          COALESCE(SUM(b.monthly_limit), 0) - COALESCE(spent.spent_amount, 0) AS remaining
+          COALESCE(SUM(ap.allocated_limit), 0) - COALESCE(spent.spent_amount, 0) AS remaining
         FROM user_sets us
         INNER JOIN budget b ON b.budget_id = us.budget_id
         INNER JOIN applies_to ap ON ap.budget_id = b.budget_id

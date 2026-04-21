@@ -20,10 +20,14 @@ TRUNCATE TABLE `user`;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Users
+-- Demo credentials:
+-- alice@example.com / alice123
+-- bob@example.com / bob123
+-- carla@example.com / carla123
 INSERT INTO `user` (user_id, email, password_hash, first_name, last_name) VALUES
-  (1, 'alice@example.com', '$2b$12$alice.fake.hash.for.dev.only', 'Alice', 'Nguyen'),
-  (2, 'bob@example.com', '$2b$12$bob.fake.hash.for.dev.only', 'Bob', 'Carter'),
-  (3, 'carla@example.com', '$2b$12$carla.fake.hash.for.dev.only', 'Carla', 'Patel');
+  (1, 'alice@example.com', 'scrypt:32768:8:1$eIGAYUSp0BiYkty9$11eea8b082f565e53eac35bd01082b013adc925df445fe02ca357f9563d645283d99470cfe368d4693ce24041962d9a6a8ad2306194108529265476a70f3f150', 'Alice', 'Nguyen'),
+  (2, 'bob@example.com', 'scrypt:32768:8:1$slA4fagTZsbhFVVt$b0ce06bc757b81bbdc027c2bea10f06ec38e7b966ff65f8308b1bef8bd14fc78d0b14098103eb5b1704738fe6f24a90801b2ea9c913e616eb69b0a79214db79a', 'Bob', 'Carter'),
+  (3, 'carla@example.com', 'scrypt:32768:8:1$HysL6ycDD6laeee3$384423916c81b247b10cf7d368b3a2e2239e2f7b6d336aed7f3e4e3f4bbd5a8bbcb4b5eac5a33801099d7f825d8efd7c76982f2c3fdb80664f16d3b7ae5fef8c', 'Carla', 'Patel');
 
 -- Accounts
 INSERT INTO account (account_id, account_name, account_type, currency_code, current_balance, is_active) VALUES
@@ -75,13 +79,13 @@ INSERT INTO user_sets (user_id, budget_id) VALUES
   (2, 5),
   (3, 6);
 
-INSERT INTO applies_to (budget_id, category_id) VALUES
-  (1, 2),
-  (2, 3),
-  (3, 5),
-  (4, 2),
-  (5, 4),
-  (6, 5);
+INSERT INTO applies_to (budget_id, category_id, allocated_limit) VALUES
+  (1, 2, 450.00),
+  (2, 3, 1400.00),
+  (3, 5, 250.00),
+  (4, 2, 300.00),
+  (5, 4, 200.00),
+  (6, 5, 150.00);
 
 -- Recurring transaction templates
 INSERT INTO recurring_transaction

@@ -133,7 +133,7 @@ BEGIN
         SET MESSAGE_TEXT = 'Transaction must be linked in records before categorization.';
     END IF;
 
-    SELECT SUM(b.monthly_limit)
+    SELECT SUM(a.allocated_limit)
     INTO v_budget_limit
     FROM budget b
     INNER JOIN user_sets us
@@ -159,7 +159,7 @@ BEGIN
 
       IF v_spent_this_month + v_transaction_amount > v_budget_limit THEN
         SIGNAL SQLSTATE '45000'
-          SET MESSAGE_TEXT = 'Budget exceeded for this category and month.';
+          SET MESSAGE_TEXT = 'Category allocation exceeded for this month.';
       END IF;
     END IF;
   END IF;

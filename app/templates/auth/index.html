@@ -3,10 +3,83 @@
 {% block title %}Auth | CS4750 Finance Tracker{% endblock %}
 
 {% block content %}
-<section>
-  <h2>Authentication</h2>
-  <p>Placeholder page for login, registration, and account security flows.</p>
+<section class="auth-hero">
+  <h2>Welcome Back</h2>
+  <p>
+    Access your personal finance workspace, or create a secure account to start tracking
+    accounts, budgets, and transactions.
+  </p>
 </section>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <section class="auth-status">
+    <h3>Status</h3>
+    {% for category, message in messages %}
+    <p class="auth-status-message {{ 'is-error' if category == 'error' else 'is-success' }}">
+      {{ message }}
+    </p>
+    {% endfor %}
+  </section>
+  {% endif %}
+{% endwith %}
+
+{% if session.get("user_id") %}
+<section class="auth-session-card">
+  <h3>Current Session</h3>
+  <p>
+    Signed in as <strong>{{ session.get("user_name") or session.get("user_email") }}</strong>.
+  </p>
+  <form class="auth-form" action="{{ url_for('auth.logout') }}" method="post">
+    <button type="submit">Log Out</button>
+  </form>
+</section>
+{% else %}
+<div class="auth-grid">
+  <section class="auth-card">
+    <h3>Sign In</h3>
+    <p class="auth-subtitle">Use your existing account credentials.</p>
+    <form class="auth-form" action="{{ url_for('auth.login') }}" method="post" autocomplete="on">
+      <label for="login-email">Email</label>
+      <input id="login-email" name="email" type="email" required />
+
+      <label for="login-password">Password</label>
+      <input id="login-password" name="password" type="password" required />
+
+      <button type="submit">Sign In</button>
+    </form>
+  </section>
+
+  <section class="auth-card">
+    <h3>Create Account</h3>
+    <p class="auth-subtitle">New here? Register to create your own workspace.</p>
+    <form class="auth-form" action="{{ url_for('auth.register') }}" method="post" autocomplete="on">
+      <label for="register-first-name">First Name</label>
+      <input id="register-first-name" name="first_name" type="text" maxlength="100" required />
+
+      <label for="register-last-name">Last Name</label>
+      <input id="register-last-name" name="last_name" type="text" maxlength="100" required />
+
+      <label for="register-email">Email</label>
+      <input id="register-email" name="email" type="email" maxlength="255" required />
+
+      <label for="register-password">Password</label>
+      <input
+        id="register-password"
+        name="password"
+        type="password"
+        minlength="8"
+        maxlength="255"
+        required
+      />
+
+      <p class="auth-help-text">Use at least 8 characters.</p>
+      <button type="submit">Create Account</button>
+    </form>
+  </section>
+</div>
+
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
