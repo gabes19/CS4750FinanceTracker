@@ -5,3 +5,4 @@ Werkzeug
 pandas
 pytest
 Flask-Bcrypt
+gunicorn
