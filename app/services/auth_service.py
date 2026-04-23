@@ -28,10 +28,10 @@ def authenticate_user(email: str | None, password: str | None) -> dict[str, Any]
     normalized_email = _normalize_email(email)
     normalized_password = _normalize_password(password)
 
-    conn = get_mysql_connection()
-    cursor = conn.cursor(dictionary=True)
-
     try:
+        conn = get_mysql_connection()
+        cursor = conn.cursor(dictionary=True)
+
         cursor.execute(
             """
             SELECT user_id, email, password_hash, first_name, last_name
@@ -51,9 +51,14 @@ def authenticate_user(email: str | None, password: str | None) -> dict[str, Any]
             "first_name": str(user["first_name"]),
             "last_name": str(user["last_name"]),
         }
+    except mysql.connector.Error as exc:
+        message = str(exc.msg) if hasattr(exc, "msg") else str(exc)
+        raise AuthValidationError(message) from exc
     finally:
-        cursor.close()
-        conn.close()
+        if "cursor" in locals():
+            cursor.close()
+        if "conn" in locals():
+            conn.close()
 
 
 def register_user(payload: dict[str, Any]) -> dict[str, Any]:
@@ -69,10 +74,10 @@ def register_user(payload: dict[str, Any]) -> dict[str, Any]:
 
     password_hash = generate_password_hash(password)
 
-    conn = get_mysql_connection()
-    cursor = conn.cursor(dictionary=True)
-
     try:
+        conn = get_mysql_connection()
+        cursor = conn.cursor(dictionary=True)
+
         cursor.execute(
             "SELECT 1 FROM `user` WHERE LOWER(email) = LOWER(%s) LIMIT 1",
             (email,),
@@ -119,8 +124,10 @@ def register_user(payload: dict[str, Any]) -> dict[str, Any]:
         message = str(exc.msg) if hasattr(exc, "msg") else str(exc)
         raise AuthValidationError(message) from exc
     finally:
-        cursor.close()
-        conn.close()
+        if "cursor" in locals():
+            cursor.close()
+        if "conn" in locals():
+            conn.close()
 
 
 def _normalize_email(raw_email: str | None) -> str:
