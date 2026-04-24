@@ -14,7 +14,9 @@ A Flask + MySQL web application scaffold for a multi-user personal finance and b
 - MySQL (`mysql-connector-python`)
 - Environment-based configuration with `.env`
 
-## Initial Setup
+Cloud-hosted url: https://cs4750-finance-tracker-172887184506.us-east4.run.app/
+
+## Initial Setup (Deprecated)
 
 1. Create and activate a virtual environment.
 2. Install dependencies:
