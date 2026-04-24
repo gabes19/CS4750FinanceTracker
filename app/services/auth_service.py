@@ -120,7 +120,8 @@ def register_user(payload: dict[str, Any]) -> dict[str, Any]:
             "last_name": last_name,
         }
     except mysql.connector.Error as exc:
-        conn.rollback()
+        if "conn" in locals():
+            conn.rollback()
         message = str(exc.msg) if hasattr(exc, "msg") else str(exc)
         raise AuthValidationError(message) from exc
     finally:
