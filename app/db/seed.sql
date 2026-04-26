@@ -50,12 +50,14 @@ INSERT INTO owns (user_id, account_id, ownership_role) VALUES
 INSERT INTO category (category_id, category_name, category_type, is_system_category) VALUES
   (1, 'Salary', 'income', 1),
   (2, 'Groceries', 'expense', 1),
-  (3, 'Rent', 'expense', 1),
+  (3, 'Rent/Mortgage', 'expense', 1),
   (4, 'Utilities', 'expense', 1),
   (5, 'Dining', 'expense', 1),
   (6, 'Freelance', 'income', 0),
   (7, 'Travel', 'expense', 0),
-  (8, 'Gym', 'expense', 0);
+  (8, 'Gym', 'expense', 0),
+  (9, 'Entertainment', 'expense', 1),
+  (10, 'Miscellaneous', 'expense', 1);
 
 -- Which user defined custom categories
 INSERT INTO defines (user_id, category_id) VALUES
