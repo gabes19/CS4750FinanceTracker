@@ -51,6 +51,16 @@ Notes:
 - `patch_budget_allocations.sql` is only needed for older databases created before the current schema version.
 - `privileges.sql` may require a strong password that satisfies the Cloud SQL password policy.
 
+If you later change `app/db/seed.sql`, redeploying Cloud Run is not enough by itself. The app container does not automatically re-run SQL seed files against Cloud SQL. To reflect seed changes in GCP, re-import the updated `seed.sql` into the existing Cloud SQL database, or recreate the database and re-import all SQL files if you want a clean reset.
+
+Recommended rollout for seed-only changes:
+
+1. Upload the updated `app/db/seed.sql` to the Cloud Storage import bucket.
+2. Import it into the existing Cloud SQL instance.
+3. Redeploy Cloud Run only if the application code also changed.
+
+Use extra caution if the updated seed script inserts rows that may already exist. Prefer idempotent inserts or test the script against a copy of the production database first.
+
 ## 6. Configure the application environment
 
 Create a local `.env` file for deployment-related settings:
