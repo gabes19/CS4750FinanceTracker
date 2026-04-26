@@ -3,10 +3,66 @@
 {% block title %}Accounts | CS4750 Finance Tracker{% endblock %}
 
 {% block content %}
-<section>
+<section class="accounts-hero">
   <h2>Accounts</h2>
-  <p>Placeholder page for linked bank accounts and balance management.</p>
+  <p>View your current balances and add funds to owner accounts.</p>
 </section>
+
+<div class="accounts-grid">
+  <section class="accounts-card">
+    <h3>Add Funds</h3>
+    <form id="add-funds-form" class="accounts-form" autocomplete="off">
+      <label for="fund-account">Account</label>
+      <select id="fund-account" name="account_id" required>
+        <option value="" disabled selected>Select account</option>
+        {% for account in accounts %}
+        {% if account.ownership_role == "owner" %}
+        <option value="{{ account.account_id }}">{{ account.account_name }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+
+      <label for="fund-amount">Amount</label>
+      <input id="fund-amount" name="amount" type="number" step="0.01" min="0.01" required />
+
+      <button type="submit">Add Funds</button>
+    </form>
+    <p id="accounts-message" role="status"></p>
+  </section>
+
+  <section class="accounts-card">
+    <h3>Balance Snapshot</h3>
+    <div class="accounts-summary-grid" id="accounts-summary-grid"></div>
+  </section>
+</div>
+
+<section class="accounts-card">
+  <h3>Your Accounts</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Account</th>
+        <th>Type</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Current Balance</th>
+      </tr>
+    </thead>
+    <tbody id="accounts-table-body">
+      {% for account in accounts %}
+      <tr>
+        <td>{{ account.account_name }}</td>
+        <td>{{ account.account_type }}</td>
+        <td>{{ account.ownership_role }}</td>
+        <td>{{ "Active" if account.is_active else "Inactive" }}</td>
+        <td>{{ "%.2f"|format(account.current_balance) }} {{ account.currency_code }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script id="initial-accounts-data" type="application/json">{{ accounts|tojson }}</script>
 {% endblock %}
 
 {% block scripts %}

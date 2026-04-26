@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const incomeEl = document.getElementById("card-income");
   const expensesEl = document.getElementById("card-expenses");
-  const netEl = document.getElementById("card-net");
+  const remainingBudgetEl = document.getElementById("card-remaining-budget");
 
   const spendingCanvas = document.getElementById("spending-chart");
   const budgetCanvas = document.getElementById("budget-chart");
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let snapshot = {
     month: monthInput?.value || "",
-    totals: { income: 0, expenses: 0, net: 0 },
+    totals: { income: 0, expenses: 0, remaining_budget: 0 },
     spending_by_category: [],
     budget_remaining_by_category: [],
   };
@@ -107,9 +107,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (expensesEl) {
       expensesEl.textContent = formatCurrency(totals.expenses || 0);
     }
-    if (netEl) {
-      netEl.textContent = formatCurrency(totals.net || 0);
-      netEl.style.color = Number(totals.net || 0) >= 0 ? "#065f46" : "#991b1b";
+    if (remainingBudgetEl) {
+      remainingBudgetEl.textContent = formatCurrency(totals.remaining_budget || 0);
+      remainingBudgetEl.style.color =
+        Number(totals.remaining_budget || 0) >= 0 ? "#065f46" : "#991b1b";
     }
 
     renderBudgetBreakdownTable(data.budget_remaining_by_category || []);

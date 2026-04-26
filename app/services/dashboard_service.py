@@ -32,6 +32,9 @@ def get_dashboard_snapshot(user_id: int, month: str | None = None) -> dict[str, 
             month_start=month_start,
             month_end=month_end,
         )
+        totals["remaining_budget"] = float(
+            sum(Decimal(str(row["remaining"])) for row in budget_remaining)
+        )
 
         return {
             "month": month_start.strftime("%Y-%m"),
@@ -83,7 +86,7 @@ def _get_month_totals(
     return {
         "income": float(income),
         "expenses": float(expenses),
-        "net": float(income - expenses),
+        "remaining_budget": 0.0,
     }
 
 
