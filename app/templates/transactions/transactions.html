@@ -175,6 +175,24 @@
   </form>
 </section>
 
+<section class="export-card">
+  <h3>Export</h3>
+  <div class="export-controls">
+    <label for="tx-export-limit">Rows (ex. 1-100 for first 100 rows)</label>
+    <input id="tx-export-limit" type="number" min="1" placeholder="1-100" />
+    <button type="button" onclick="txExport()">Export CSV</button>
+  </div>
+</section>
+
+<script>
+function txExport() {
+  const limit = document.getElementById('tx-export-limit').value || 100;
+  const params = new URLSearchParams(window.location.search);
+  params.set('limit', limit);
+  window.location.href = '/transactions/export?' + params.toString();
+}
+</script>
+
 <section>
   <h3>Your Transactions</h3>
   <p id="transactions-message" role="status"></p>

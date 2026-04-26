@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import csv
+import io
 from datetime import date
 from typing import Any
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, jsonify, make_response, redirect, render_template, request, session, url_for
 
 from app.services.budget_service import (
     BudgetFilters,
@@ -49,6 +51,31 @@ def index():
         categories=categories,
         filters=filters,
     )
+
+
+@budgets_bp.get("/export")
+def export_budgets():
+    """Export budgets as CSV."""
+
+    user_id = _session_user_id_or_none()
+    if user_id is None:
+        return redirect(url_for("auth.index"))
+
+    raw_limit = request.args.get("limit", "").strip()
+    try:
+        limit = max(1, int(raw_limit)) if raw_limit else None
+    except ValueError:
+        limit = None
+
+    month = request.args.get("month") or date.today().strftime("%Y-%m")
+    try:
+        budgets = list_user_budgets(user_id, BudgetFilters(month=month))
+    except BudgetValidationError:
+        budgets = list_user_budgets(user_id, BudgetFilters(month=date.today().strftime("%Y-%m")))
+
+    if limit is not None:
+        budgets = budgets[:limit]
+    return _budget_respond_csv(budgets)
 
 
 @budgets_bp.get("/api")
@@ -136,6 +163,34 @@ def _handle_not_found_error(exc: BudgetNotFoundError):
 @budgets_bp.errorhandler(BudgetForbiddenError)
 def _handle_forbidden_error(exc: BudgetForbiddenError):
     return jsonify({"error": str(exc)}), 403
+
+
+def _flatten_budget(budget: dict) -> dict:
+    """Flatten nested categories list to a semicolon-separated string for CSV/XML."""
+    return {
+        "budget_id": budget["budget_id"],
+        "budget_name": budget["budget_name"],
+        "budget_month": str(budget["budget_month"])[:7] if budget.get("budget_month") else "",
+        "monthly_limit": budget["monthly_limit"],
+        "categories": "; ".join(
+            f"{c['category_name']}:{c['allocated_limit']:.2f}"
+            for c in budget.get("categories", [])
+        ),
+    }
+
+
+_BUDGET_CSV_FIELDS = ["budget_id", "budget_name", "budget_month", "monthly_limit", "categories"]
+
+
+def _budget_respond_csv(budgets: list[dict]) -> Any:
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=_BUDGET_CSV_FIELDS, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows([_flatten_budget(b) for b in budgets])
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+    resp.headers["Content-Disposition"] = "attachment; filename=budgets.csv"
+    return resp
 
 
 def _request_payload() -> dict[str, Any]:

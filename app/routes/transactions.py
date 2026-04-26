@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import csv
+import io
 from typing import Any
 
-from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, jsonify, make_response, redirect, render_template, request, session, url_for
 
 from app.services.transaction_service import (
     TransactionFilters,
@@ -44,6 +46,27 @@ def index():
         categories=categories,
         filters=filters,
     )
+
+
+@transactions_bp.get("/export")
+def export_transactions():
+    """Export transactions as CSV."""
+
+    user_id = _session_user_id_or_none()
+    if user_id is None:
+        return redirect(url_for("auth.index"))
+
+    raw_limit = request.args.get("limit", "").strip()
+    try:
+        limit = max(1, int(raw_limit)) if raw_limit else None
+    except ValueError:
+        limit = None
+
+    filters = _build_filters_from_args(request.args)
+    transactions = list_user_transactions(user_id, filters)
+    if limit is not None:
+        transactions = transactions[:limit]
+    return _tx_respond_csv(transactions)
 
 
 @transactions_bp.get("/api")
@@ -163,6 +186,23 @@ def _require_session_user_id_json() -> int | tuple[Any, int]:
     if user_id is None:
         return jsonify({"error": "Authentication required."}), 401
     return user_id
+
+
+_TX_CSV_FIELDS = [
+    "transaction_id", "transaction_date", "transaction_type",
+    "amount", "description", "account_name", "category_name",
+]
+
+
+def _tx_respond_csv(transactions: list[dict]) -> Any:
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=_TX_CSV_FIELDS, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(transactions)
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+    resp.headers["Content-Disposition"] = "attachment; filename=transactions.csv"
+    return resp
 
 
 def _build_filters_from_args(args) -> TransactionFilters:

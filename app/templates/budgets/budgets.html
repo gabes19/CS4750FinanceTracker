@@ -187,6 +187,24 @@
   </section>
 </div>
 
+<section class="export-card">
+  <h3>Export</h3>
+  <div class="export-controls">
+    <label for="budget-export-limit">Rows (ex. 1-100 for first 100 rows)</label>
+    <input id="budget-export-limit" type="number" min="1" placeholder="1-100" />
+    <button type="button" onclick="budgetExport()">Export CSV</button>
+  </div>
+</section>
+
+<script>
+function budgetExport() {
+  const limit = document.getElementById('budget-export-limit').value || 100;
+  const params = new URLSearchParams(window.location.search);
+  params.set('limit', limit);
+  window.location.href = '/budgets/export?' + params.toString();
+}
+</script>
+
 <section>
   <h3>Your Budgets</h3>
   <p id="budgets-message" role="status"></p>
