@@ -14,26 +14,44 @@ A Flask + MySQL web application scaffold for a multi-user personal finance and b
 - MySQL (`mysql-connector-python`)
 - Environment-based configuration with `.env`
 
-Cloud-hosted url: https://cs4750-finance-tracker-172887184506.us-east4.run.app/
+This project was originally deployed on Google Cloud Platform (Cloud Run + Cloud SQL). That hosted setup is no longer the primary workflow, and the app should now be run locally for development.
 
-## Initial Setup (Deprecated)
+The previous Cloud Run URL is kept here for historical reference: https://cs4750-finance-tracker-172887184506.us-east4.run.app/
+
+## Local Setup
 
 1. Create and activate a virtual environment.
 2. Install dependencies:
    - `pip install -r requirements.txt`
-3. Copy `.env.example` to `.env` and update local credentials.
-4. Ensure MySQL is running locally.
-5. Initialize the database (run in this order):
-   - `mysql -u root -p < app/db/schema.sql`
-   - `mysql -u root -p < app/db/procedures.sql`
-   - `mysql -u root -p < app/db/seed.sql`
-   - `mysql -u root -p < app/db/privileges.sql`
-   - If your DB was created before category-allocation budgets were added, run:
-     - `mysql -u root -p < app/db/patch_budget_allocations.sql`
-     - `mysql -u root -p < app/db/procedures.sql`
-6. Run the app:
+3. Start a local MySQL server.
+4. Create a local `.env` file in the project root with values like:
+
+   ```env
+   FLASK_ENV=development
+   FLASK_DEBUG=1
+   SECRET_KEY=change-me
+   MYSQL_HOST=localhost
+   MYSQL_PORT=3306
+   MYSQL_USER=root
+   MYSQL_PASSWORD=your_mysql_password
+   MYSQL_DATABASE=cs4750_finance_tracker
+   ```
+
+   Leave `INSTANCE_CONNECTION_NAME` and `MYSQL_UNIX_SOCKET` unset for normal local development.
+
+5. Create the database in MySQL if it does not already exist:
+   - `CREATE DATABASE cs4750_finance_tracker;`
+6. Initialize the database schema and seed data in this order:
+   - `mysql -u root -p cs4750_finance_tracker < app/db/schema.sql`
+   - `mysql -u root -p cs4750_finance_tracker < app/db/procedures.sql`
+   - `mysql -u root -p cs4750_finance_tracker < app/db/seed.sql`
+   - `mysql -u root -p cs4750_finance_tracker < app/db/privileges.sql`
+7. If your local database was created before category-allocation budgets were added, run:
+   - `mysql -u root -p cs4750_finance_tracker < app/db/patch_budget_allocations.sql`
+   - `mysql -u root -p cs4750_finance_tracker < app/db/procedures.sql`
+8. Start the Flask app:
    - `python run.py`
-7. Open `http://127.0.0.1:5001` and sign in via `Auth`.
+9. Open `http://127.0.0.1:5001` and sign in via `Auth`.
 
 ## Demo Login Accounts
 
@@ -68,7 +86,7 @@ cs4750-finance-tracker/
 │   └── utils/
 ├── docs/
 ├── tests/
-├── .env.example
+├── .env
 ├── .gitignore
 ├── config.py
 ├── requirements.txt
